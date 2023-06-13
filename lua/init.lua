@@ -1,0 +1,2 @@
+print('bang')
+
