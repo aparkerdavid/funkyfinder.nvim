@@ -8,17 +8,21 @@ function input.parse(input_str)
   local range_end = 1
   local length = input_str:len()
   local substrings = {}
+  local take_substring = function(sub_start, sub_end)
+    local substring = input_str:sub(sub_start, sub_end)
+    if substring ~= '' then
+      table.insert(substrings, substring)
+    end
+    range_start = range_end + 1
+    range_end = range_start
+  end
   while range_end <= length do
     if char_at(input_str, range_end) == ' ' then
-      local substring = input_str:sub(range_start, range_end - 1)
-      table.insert(substrings, substring)
-      range_start = range_end + 1
-      range_end = range_start
+      take_substring(range_start, range_end - 1)
     elseif range_end == length then
-      local substring = input_str:sub(range_start, range_end)
-      table.insert(substrings, substring)
-      range_start = range_end + 1
-      range_end = range_start
+      take_substring(range_start, range_end)
+    elseif char_at(input_str, range_end) == '\\' then
+      range_end = range_end + 2
     else
       range_end = range_end + 1
     end
