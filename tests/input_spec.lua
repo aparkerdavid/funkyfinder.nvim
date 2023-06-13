@@ -12,4 +12,19 @@ describe('Test example', function()
       assert.are.same(input.parse(str), expected)
     end
   end)
+
+  it('matches input strings to prompt strings', function()
+    local cases = {
+      { 'hello',             'hello world',       { { 0, 5 } } },
+      { 'bye',               'hello world',       false },
+      { 'hello world',       'hello cruel world', { { 0, 5 }, { 12, 17 } } },
+      { 'hello happy',       'hello cruel world', false },
+      { 'world hello cruel', 'hello cruel world', { { 12, 17 }, { 0, 5 }, { 6, 11 } } },
+      { 'cruel\\ world',     'hello cruel world', { { 6, 17 } } }
+    }
+    for _idx, case in pairs(cases) do
+      local regexes = input.build_regexes(case[1])
+      assert.are.same(input.match(regexes, case[2]), case[3])
+    end
+  end)
 end)

@@ -30,4 +30,26 @@ function input.parse(input_str)
   return substrings
 end
 
+function input.build_regexes(prompt)
+  local prompt_terms = input.parse(prompt)
+  local regexes = {}
+  for _, term in pairs(prompt_terms) do
+    table.insert(regexes, vim.regex(term))
+  end
+  return regexes
+end
+
+function input.match(regexes, candidate)
+  local match = {}
+  for _, regex in pairs(regexes) do
+    local match_start, match_end = regex:match_str(candidate)
+    if match_start and match_end then
+      table.insert(match, { match_start, match_end })
+    else
+      return false
+    end
+  end
+  return match
+end
+
 return input
