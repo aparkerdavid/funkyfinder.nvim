@@ -1,6 +1,6 @@
-local input = require 'input'
+local prompt = require 'prompt'
 describe('Test example', function()
-  it('splits provided input string on unescaped spaces', function()
+  it('splits provided prompt string on unescaped spaces', function()
     local cases = {
       { 'hello world',            { 'hello', 'world' } },
       { [[hello world\]],         { 'hello', [[world\]] } },
@@ -10,11 +10,11 @@ describe('Test example', function()
     }
 
     for _, case in pairs(cases) do
-      assert.are.same(input.parse(case[1]), case[2])
+      assert.are.same(prompt.parse(case[1]), case[2])
     end
   end)
 
-  it('matches input strings to prompt strings', function()
+  it('matches prompt strings to prompt strings', function()
     local cases = {
       { 'hello',             'hello world',       { { 0, 5 } } },
       { 'bye',               'hello world',       false },
@@ -24,8 +24,8 @@ describe('Test example', function()
       { [[cruel\ world]],    'hello cruel world', { { 6, 17 } } }
     }
     for _, case in pairs(cases) do
-      local regexes = input.build_regexes(case[1])
-      assert.are.same(input.match(regexes, case[2]), case[3])
+      local queries = prompt.build_queries(case[1])
+      assert.are.same(prompt.match(queries, case[2]), case[3])
     end
   end)
 end)
