@@ -21,7 +21,8 @@ describe('Test example', function()
       { 'hello world',       'hello cruel world', { { 0, 5 }, { 12, 17 } } },
       { 'hello happy',       'hello cruel world', false },
       { 'world hello cruel', 'hello cruel world', { { 12, 17 }, { 0, 5 }, { 6, 11 } } },
-      { [[cruel\ world]],    'hello cruel world', { { 6, 17 } } }
+      { [[cruel\ world]],    'hello cruel world', { { 6, 17 } } },
+      { '',                  'hello world',       {} }
     }
     for _, case in pairs(cases) do
       local queries = prompt.build_queries(case[1])
