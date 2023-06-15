@@ -4,12 +4,21 @@ local Layout = require('nui.layout')
 local prompt = require('prompt')
 
 local function build_picker()
+  local layout = Layout({
+      position = 0,
+      size = { width = 1, height = 1, },
+    },
+    {
+      Layout.Box(Menu({ position = 0, size = 1 }, { lines = { Menu.item("") } }), { size = 1 })
+    })
+
   local bufnr = vim.fn.bufnr()
   local candidates = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local lines = {}
   for idx, line in pairs(candidates) do
     lines[idx] = Menu.item(line, { id = idx })
   end
+
 
   local menu = Menu({
     position = 0,
@@ -18,12 +27,6 @@ local function build_picker()
     lines = lines,
     max_width = 20,
     max_height = 10,
-    keymap = {
-      focus_next = { "j", "<Down>", "<Tab>" },
-      focus_prev = { "k", "<Up>", "<S-Tab>" },
-      cloke = { "<Esc>", "<C-c>" },
-      submit = { "<CR>", "<Space>" },
-    },
     on_change = function(item)
       vim.api.nvim_buf_call(bufnr, function()
         vim.cmd('normal ' .. item.id .. 'ggzz')
@@ -51,12 +54,24 @@ local function build_picker()
     end
   })
 
+  -- unmount input by pressing `<Esc>` in normal mode
+  input:map("n", "<Esc>", function()
+    input:unmount()
+  end, { noremap = true })
 
-  local layout = Layout({
-      position = "50%",
+  input:map("n", "k", function()
+    menu.menu_props.on_focus_prev()
+  end, { noremap = true })
+
+  input:map("n", "j", function()
+    menu.menu_props.on_focus_next()
+  end, { noremap = true })
+
+  layout:update({
+      position = "100%",
       size = {
         width = "100%",
-        height = "100%",
+        height = 11,
       },
     },
     {
