@@ -3,6 +3,12 @@ local Menu = require('nui.menu')
 local Layout = require('nui.layout')
 local prompt = require('prompt')
 
+local function jump_to_line(bufnr, line_number)
+  vim.api.nvim_buf_call(bufnr, function()
+    vim.cmd('normal ' .. line_number .. 'ggzz')
+  end)
+end
+
 local function build_picker()
   local layout = Layout({
       position = 0,
@@ -28,9 +34,7 @@ local function build_picker()
     max_width = 20,
     max_height = 10,
     on_change = function(item)
-      vim.api.nvim_buf_call(bufnr, function()
-        vim.cmd('normal ' .. item.id .. 'ggzz')
-      end)
+      jump_to_line(bufnr, item.id)
     end,
   })
 
@@ -50,6 +54,8 @@ local function build_picker()
         end
 
         menu.tree:render()
+        local focused_item = menu.tree:get_node()
+        jump_to_line(bufnr, focused_item.id)
       end)
     end
   })
