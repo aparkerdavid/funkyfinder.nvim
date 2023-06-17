@@ -3,9 +3,17 @@ local Menu = require('nui.menu')
 local Layout = require('nui.layout')
 local prompt = require('prompt')
 
+local selected_line_ns = vim.api.nvim_create_namespace('funky_selected_line')
+
+local function clear_highlight(bufnr)
+  vim.api.nvim_buf_clear_namespace(bufnr, selected_line_ns, 0, -1)
+end
+
 local function jump_to_line(bufnr, line_number)
   vim.api.nvim_buf_call(bufnr, function()
+    clear_highlight(bufnr)
     vim.cmd('normal ' .. line_number .. 'ggzz')
+    vim.api.nvim_buf_add_highlight(bufnr, selected_line_ns, 'Visual', line_number - 1, 0, -1)
   end)
 end
 
@@ -36,12 +44,24 @@ local function build_picker()
     on_change = function(item)
       jump_to_line(bufnr, item.id)
     end,
+    on_close = function()
+      clear_highlight(bufnr)
+    end,
+    on_submit = function()
+      clear_highlight(bufnr)
+    end,
   })
 
   local input = Input({
     position = 0,
     size = { width = '100%', },
   }, {
+    on_close = function()
+      clear_highlight(bufnr)
+    end,
+    on_submit = function()
+      clear_highlight(bufnr)
+    end,
     on_change = function(prompt_str)
       vim.schedule(function()
         local queries = prompt.build_queries(prompt_str)
@@ -55,14 +75,16 @@ local function build_picker()
 
         menu.tree:render()
         local focused_item = menu.tree:get_node()
-        jump_to_line(bufnr, focused_item.id)
+        if focused_item then
+          jump_to_line(bufnr, focused_item.id)
+        end
       end)
     end
   })
 
-  -- unmount input by pressing `<Esc>` in normal mode
   input:map("n", "<Esc>", function()
     input:unmount()
+    clear_highlight(bufnr)
   end, { noremap = true })
 
   input:map("n", "k", function()
