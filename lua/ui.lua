@@ -109,5 +109,11 @@ layout:update({
     }, { dir = "col", size = "100%" })
   })
 
-layout:mount()
-vim.api.nvim_set_current_win(input.winid)
+local ui = {}
+
+function ui.search_buffer()
+  layout:mount()
+  vim.api.nvim_set_current_win(input.winid)
+end
+
+return ui
