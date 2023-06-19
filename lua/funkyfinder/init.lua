@@ -19,67 +19,41 @@ end
 
 local funkyfinder = {}
 
-function funkyfinder.search_buffer()
-  local layout = Layout({
-      position = 0,
-      size = { width = 1, height = 1, },
-    },
-    {
-      Layout.Box(Menu({ position = 0, size = 1 }, { lines = { Menu.item("") } }), { size = 1 })
-    })
-
-  local bufnr = vim.fn.bufnr()
-  local candidates = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  local lines = {}
-  for idx, line in pairs(candidates) do
-    lines[idx] = Menu.item(line, { id = idx })
-  end
-
-
+function funkyfinder.picker(opts)
   local menu = Menu({
     position = 0,
     size = { width = '100%', },
   }, {
     focusable = false,
-    lines = lines,
+    lines = opts.candidates,
     max_width = 20,
     max_height = 10,
-    on_change = function(item)
-      jump_to_line(bufnr, item.id)
-    end,
-    on_close = function()
-      clear_highlight(bufnr)
-    end,
-    on_submit = function()
-      clear_highlight(bufnr)
-    end,
+    on_change = opts.on_change,
+    on_submit = opts.on_submit,
+    on_close = opts.on_close,
   })
 
   local input = Input({
     position = 0,
     size = { width = '100%', },
   }, {
-    on_close = function()
-      clear_highlight(bufnr)
-    end,
-    on_submit = function()
-      clear_highlight(bufnr)
-    end,
+    on_close = opts.on_close,
+    on_submit = opts.on_submit,
     on_change = function(prompt_str)
       vim.schedule(function()
         local queries = prompt.build_queries(prompt_str)
         menu.tree:set_nodes({})
 
-        for idx, candidate in pairs(candidates) do
-          if prompt.match(queries, candidate) then
-            menu.tree:add_node(Menu.item(candidate, { id = idx }))
+        for _, candidate in pairs(opts.candidates) do
+          if prompt.match(queries, candidate.text) then
+            menu.tree:add_node(candidate)
           end
         end
 
         menu.tree:render()
         local focused_item = menu.tree:get_node()
         if focused_item then
-          jump_to_line(bufnr, focused_item.id)
+          opts.on_change(focused_item)
         end
       end)
     end
@@ -87,7 +61,7 @@ function funkyfinder.search_buffer()
 
   input:map("n", "<Esc>", function()
     input:unmount()
-    clear_highlight(bufnr)
+    opts.on_close()
   end, { noremap = true })
 
   input:map("n", "k", function()
@@ -98,7 +72,7 @@ function funkyfinder.search_buffer()
     menu.menu_props.on_focus_next()
   end, { noremap = true })
 
-  layout:update({
+  local layout = Layout({
       position = "100%",
       size = {
         width = "100%",
@@ -112,8 +86,33 @@ function funkyfinder.search_buffer()
       }, { dir = "col", size = "100%" })
     })
 
-  layout:mount()
-  vim.api.nvim_set_current_win(input.winid)
+  function layout:mount()
+    Layout.mount(self)
+    vim.api.nvim_set_current_win(input.winid)
+  end
+
+  return layout
+end
+
+function funkyfinder.search_buffer()
+  local bufnr = vim.fn.bufnr()
+  local candidates = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+  for idx, line in pairs(candidates) do
+    candidates[idx] = Menu.item(line, { id = idx })
+  end
+
+  funkyfinder.picker({
+    candidates = candidates,
+    on_change = function(item)
+      jump_to_line(bufnr, item.id)
+    end,
+    on_submit = function()
+      clear_highlight(bufnr)
+    end,
+    on_close = function()
+      clear_highlight(bufnr)
+    end,
+  }):mount()
 end
 
 return funkyfinder
