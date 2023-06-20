@@ -47,19 +47,6 @@ function ui.picker(opts)
     end
   })
 
-  input:map("n", "<Esc>", function()
-    input:unmount()
-    on_close()
-  end, { noremap = true })
-
-  input:map("n", "k", function()
-    menu.menu_props.on_focus_prev()
-  end, { noremap = true })
-
-  input:map("n", "j", function()
-    menu.menu_props.on_focus_next()
-  end, { noremap = true })
-
   local layout = Layout({
       position = "100%",
       size = {
@@ -79,6 +66,19 @@ function ui.picker(opts)
     on_submit(item)
     layout:unmount()
   end
+
+  input:map("n", "<Esc>", function()
+    on_close()
+    input:unmount()
+  end, { noremap = true })
+
+  input:map("n", "k", function()
+    menu.menu_props.on_focus_prev()
+  end, { noremap = true })
+
+  input:map("n", "j", function()
+    menu.menu_props.on_focus_next()
+  end, { noremap = true })
 
   input:map('i', '<CR>', submit, { noremap = true })
   input:map('n', '<CR>', submit, { noremap = true })
