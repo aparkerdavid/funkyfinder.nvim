@@ -1,5 +1,6 @@
 local Menu = require('nui.menu')
 local scan_dir = require('plenary.scandir').scan_dir
+local Path = require('plenary.path')
 local ui = require 'funkyfinder.ui'
 local prompt = require('funkyfinder.prompt')
 
@@ -63,16 +64,19 @@ function funkyfinder.find_file(dir)
   local win_id = vim.api.nvim_get_current_win()
   dir = dir or vim.fn.getcwd()
 
-  local candidates = scan_dir(dir, { respect_gitignore = true })
-  for idx, line in pairs(candidates) do
-    candidates[idx] = Menu.item(line, { id = idx })
+  local absolute_paths = scan_dir(dir, { respect_gitignore = true })
+  local candidates = {}
+  for idx, path in ipairs(absolute_paths) do
+    local relative_path = Path.new(path):normalize(dir)
+    candidates[idx] = Menu.item(relative_path, { id = idx })
   end
 
   ui.picker({
     candidates = candidates,
     on_filter = orderless_search(candidates),
     on_submit = function(item)
-      open_file(win_id, item.text)
+      local absolute_path = absolute_paths[item.id]
+      open_file(win_id, absolute_path)
     end,
   }):mount()
 end
