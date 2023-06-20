@@ -1,7 +1,6 @@
 local Menu = require('nui.menu')
 local Input = require('nui.input')
 local Layout = require('nui.layout')
-local prompt = require('funkyfinder.prompt')
 
 local ui = {}
 
@@ -29,13 +28,11 @@ function ui.picker(opts)
     on_close = on_close,
     on_change = function(prompt_str)
       vim.schedule(function()
-        local queries = prompt.build_queries(prompt_str)
         menu.tree:set_nodes({})
 
-        for _, candidate in pairs(opts.candidates) do
-          if prompt.match(queries, candidate.text) then
-            menu.tree:add_node(candidate)
-          end
+        local results = opts.on_filter(prompt_str)
+        for _, result in ipairs(results) do
+          menu.tree:add_node(result)
         end
 
         menu.tree:render()

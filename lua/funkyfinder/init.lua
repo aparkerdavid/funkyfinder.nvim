@@ -1,6 +1,7 @@
 local Menu = require('nui.menu')
 local scan_dir = require('plenary.scandir').scan_dir
 local ui = require 'funkyfinder.ui'
+local prompt = require('funkyfinder.prompt')
 
 local selected_line_ns = vim.api.nvim_create_namespace('funkyfinder_selected_line')
 
@@ -21,6 +22,19 @@ local function open_file(win_id, path)
   vim.cmd('e ' .. path)
 end
 
+local function orderless_search(candidates)
+  return function(prompt_str)
+    local results = {}
+    local queries = prompt.build_queries(prompt_str)
+    for _, candidate in ipairs(candidates) do
+      if prompt.match(queries, candidate.text) then
+        table.insert(results, candidate)
+      end
+    end
+    return results
+  end
+end
+
 local funkyfinder = {}
 
 function funkyfinder.search_buffer()
@@ -32,6 +46,7 @@ function funkyfinder.search_buffer()
 
   ui.picker({
     candidates = candidates,
+    on_filter = orderless_search(candidates),
     on_change = function(item)
       jump_to_line(bufnr, item.id)
     end,
@@ -55,6 +70,7 @@ function funkyfinder.find_file(dir)
 
   ui.picker({
     candidates = candidates,
+    on_filter = orderless_search(candidates),
     on_submit = function(item)
       open_file(win_id, item.text)
     end,
