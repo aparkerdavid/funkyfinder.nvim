@@ -48,7 +48,7 @@ function funkyfinder.find_file(dir)
   local win_id = vim.api.nvim_get_current_win()
   dir = dir or vim.fn.getcwd()
 
-  local candidates = scan_dir(dir)
+  local candidates = scan_dir(dir, { respect_gitignore = true })
   for idx, line in pairs(candidates) do
     candidates[idx] = Menu.item(line, { id = idx })
   end
