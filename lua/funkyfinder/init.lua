@@ -1,8 +1,8 @@
-local Menu = require('nui.menu')
-local scan_dir = require('plenary.scandir').scan_dir
-local Path = require('plenary.path')
+local Menu = require 'nui.menu'
+local Path = require 'plenary.path'
 local ui = require 'funkyfinder.ui'
-local prompt = require('funkyfinder.prompt')
+local util = require 'funkyfinder.util'
+local prompt = require 'funkyfinder.prompt'
 
 local selected_line_ns = vim.api.nvim_create_namespace('funkyfinder_selected_line')
 
@@ -64,7 +64,7 @@ function funkyfinder.find_file(dir)
   local win_id = vim.api.nvim_get_current_win()
   dir = dir or vim.fn.getcwd()
 
-  local absolute_paths = scan_dir(dir, { respect_gitignore = true })
+  local absolute_paths = util.dir_files(dir)
   local candidates = {}
   for idx, path in ipairs(absolute_paths) do
     local relative_path = Path.new(path):normalize(dir)
