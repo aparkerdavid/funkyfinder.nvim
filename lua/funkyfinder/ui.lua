@@ -7,14 +7,16 @@ local ui = {}
 function ui.picker(opts)
   local on_submit = opts.on_submit or function(_) end
   local on_change = opts.on_change or function(_) end
+  local on_filter = opts.on_filter or function(_) return {} end
   local on_close = opts.on_close or function() end
+  local candidates = opts.candidates or {}
 
   local menu = Menu({
     position = 0,
     size = { width = '100%', },
   }, {
     focusable = false,
-    lines = opts.candidates,
+    lines = candidates,
     max_width = 20,
     max_height = 10,
     on_change = on_change,
@@ -30,7 +32,7 @@ function ui.picker(opts)
       vim.schedule(function()
         menu.tree:set_nodes({})
 
-        local results = opts.on_filter(prompt_str)
+        local results = on_filter(prompt_str)
         for _, result in ipairs(results) do
           menu.tree:add_node(result)
         end
@@ -53,10 +55,21 @@ function ui.picker(opts)
     },
     {
       Layout.Box({
-        Layout.Box(input, { size = { height = 1 } }),
         Layout.Box(menu, { size = { height = 10 } }),
+        Layout.Box(input, { size = { height = 1 } }),
       }, { dir = "col", size = "100%" })
     })
+
+  function layout:mount()
+    self.previous_win_id = vim.api.nvim_get_current_win()
+    Layout.mount(self)
+    vim.api.nvim_set_current_win(input.winid)
+  end
+
+  function layout:unmount()
+    vim.api.nvim_set_current_win(self.previous_win_id)
+    Layout.unmount(self)
+  end
 
   local function submit()
     local item = menu.tree:get_node()
@@ -66,7 +79,7 @@ function ui.picker(opts)
 
   input:map("n", "<Esc>", function()
     on_close()
-    input:unmount()
+    layout:unmount()
   end, { noremap = true })
 
   input:map("n", "k", function()
@@ -80,11 +93,6 @@ function ui.picker(opts)
   input:map('i', '<CR>', submit, { noremap = true })
   input:map('n', '<CR>', submit, { noremap = true })
   menu:map('n', '<CR>', submit, { noremap = true })
-
-  function layout:mount()
-    Layout.mount(self)
-    vim.api.nvim_set_current_win(input.winid)
-  end
 
   return layout
 end
