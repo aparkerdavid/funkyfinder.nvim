@@ -43,9 +43,16 @@ function funkyfinder.search_buffer()
   local win_id = vim.api.nvim_get_current_win()
   local current_line = vim.api.nvim_win_get_cursor(win_id)[1]
 
-  local candidates = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
-  for idx, line in pairs(candidates) do
-    candidates[idx] = Menu.item(line, { id = idx })
+  local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
+
+  local candidates = {}
+
+  for i = current_line, #lines do
+    table.insert(candidates, Menu.item(lines[i], { id = i }))
+  end
+
+  for i = 1, current_line - 1 do
+    table.insert(candidates, Menu.item(lines[i], { id = i }))
   end
 
   ui.picker({
