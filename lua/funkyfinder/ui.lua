@@ -1,6 +1,5 @@
 local Menu = require('nui.menu')
 local Input = require('nui.input')
-local Layout = require('nui.layout')
 
 local ui = {}
 
@@ -10,35 +9,65 @@ function ui.picker(opts)
   local on_filter = opts.on_filter or function(_) return {} end
   local on_close = opts.on_close or function() end
   local candidates = opts.candidates or {}
+  local picker = {}
+  picker.max_height = 10
 
-  local menu = Menu({
-    position = 0,
+  picker.menu = Menu({
+    position = '100%',
     size = { width = '100%', },
+    border = {
+      padding = {
+        bottom = 1
+      }
+    }
   }, {
     focusable = false,
     lines = candidates,
     max_width = 20,
-    max_height = 10,
+    max_height = picker.max_height - 1,
     on_change = on_change,
     on_close = on_close,
   })
 
-  local input = Input({
-    position = 0,
+
+  function picker.menu:set_height(height)
+    self:set_size({ width = self.win_config.width, height = height })
+  end
+
+  function picker.menu:get_tree()
+    return self.tree
+  end
+
+  picker.input = Input({
+    position = '100%',
     size = { width = '100%', },
   }, {
     on_close = on_close,
     on_change = function(prompt_str)
       vim.schedule(function()
-        menu.tree:set_nodes({})
+        local tree = picker.menu:get_tree()
+        tree:set_nodes({})
 
         local results = on_filter(prompt_str)
         for _, result in ipairs(results) do
-          menu.tree:add_node(result)
+          tree:add_node(result)
         end
 
-        menu.tree:render()
-        local focused_item = menu.tree:get_node()
+        if #results == 0 then
+          picker:set_menu_height(1)
+        elseif #results < picker.max_height then
+          picker:set_menu_height(#results)
+        else
+          picker:set_menu_height(picker.max_height)
+        end
+
+        tree:render()
+        if #results < picker.max_height then
+          vim.api.nvim_buf_call(picker.menu.bufnr, function()
+            vim.cmd('normal zb')
+          end)
+        end
+        local focused_item = tree:get_node()
         if focused_item then
           on_change(focused_item)
         end
@@ -46,55 +75,48 @@ function ui.picker(opts)
     end
   })
 
-  local layout = Layout({
-      position = "100%",
-      size = {
-        width = "100%",
-        height = 11,
-      },
-    },
-    {
-      Layout.Box({
-        Layout.Box(menu, { size = { height = 10 } }),
-        Layout.Box(input, { size = { height = 1 } }),
-      }, { dir = "col", size = "100%" })
-    })
-
-  function layout:mount()
-    self.previous_win_id = vim.api.nvim_get_current_win()
-    Layout.mount(self)
-    vim.api.nvim_set_current_win(input.winid)
+  function picker:set_menu_height(height)
+    self.menu:set_height(height)
+    self.menu:update_layout({ position = '100%' })
   end
 
-  function layout:unmount()
+  function picker:mount()
+    self.previous_win_id = vim.api.nvim_get_current_win()
+    self.input:mount()
+    self.menu:mount()
+    vim.api.nvim_set_current_win(self.input.winid)
+  end
+
+  function picker:unmount()
     vim.api.nvim_set_current_win(self.previous_win_id)
-    Layout.unmount(self)
+    self.input:unmount()
+    self.menu:unmount()
   end
 
   local function submit()
-    local item = menu.tree:get_node()
+    local item = picker.menu.tree:get_node()
     on_submit(item)
-    layout:unmount()
+    picker:unmount()
   end
 
-  input:map("n", "<Esc>", function()
+  picker.input:map("n", "<Esc>", function()
     on_close()
-    layout:unmount()
+    picker:unmount()
   end, { noremap = true })
 
-  input:map("n", "k", function()
-    menu.menu_props.on_focus_prev()
+  picker.input:map("n", "k", function()
+    picker.menu.menu_props.on_focus_prev()
   end, { noremap = true })
 
-  input:map("n", "j", function()
-    menu.menu_props.on_focus_next()
+  picker.input:map("n", "j", function()
+    picker.menu.menu_props.on_focus_next()
   end, { noremap = true })
 
-  input:map('i', '<CR>', submit, { noremap = true })
-  input:map('n', '<CR>', submit, { noremap = true })
-  menu:map('n', '<CR>', submit, { noremap = true })
+  picker.input:map('i', '<CR>', submit, { noremap = true })
+  picker.input:map('n', '<CR>', submit, { noremap = true })
+  picker.menu:map('n', '<CR>', submit, { noremap = true })
 
-  return layout
+  return picker
 end
 
 return ui
