@@ -62,7 +62,7 @@ function ui.picker(opts)
         end
 
         tree:render()
-        if #results < picker.max_height then
+        if #results <= picker.max_height then
           vim.api.nvim_buf_call(picker.menu.bufnr, function()
             vim.cmd('normal zb')
           end)
