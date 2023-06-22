@@ -3,6 +3,14 @@ local function char_at(str, n)
   return str:sub(n, n)
 end
 
+local function build_regex(term)
+  if vim.o.ignorecase then
+    return vim.regex([[\c]] .. term)
+  else
+    return vim.regex(term)
+  end
+end
+
 function prompt.parse(prompt_str)
   local range_start = 1
   local range_end = 1
@@ -37,7 +45,7 @@ function prompt.build_queries(prompt_str)
   local queries = {}
 
   for _, term in pairs(prompt_terms) do
-    table.insert(queries, vim.regex(term))
+    table.insert(queries, build_regex(term))
   end
 
   return queries

@@ -1,6 +1,0 @@
-local ui = require('ui')
-describe('Test example', function()
-  it('bangs', function()
-    print('bang')
-  end)
-end)

@@ -1,4 +1,4 @@
-local prompt = require 'prompt'
+local prompt = require 'funkyfinder.prompt'
 describe('Test example', function()
   it('splits provided prompt string on unescaped spaces', function()
     local cases = {
@@ -27,6 +27,27 @@ describe('Test example', function()
     for _, case in pairs(cases) do
       local queries = prompt.build_queries(case[1])
       assert.are.same(prompt.match(queries, case[2]), case[3])
+    end
+  end)
+
+  it("respects the user's ignorecase setting", function()
+    local cases = {
+      { 'hello', 'Hello world', { { 0, 5 } } },
+      { 'hello', 'heLlO World', { { 0, 5 } } },
+    }
+
+    vim.cmd('set ignorecase')
+
+    for _, case in pairs(cases) do
+      local queries = prompt.build_queries(case[1])
+      assert.are.same(prompt.match(queries, case[2]), case[3])
+    end
+
+    vim.cmd('set noignorecase')
+
+    for _, case in pairs(cases) do
+      local queries = prompt.build_queries(case[1])
+      assert.are.same(prompt.match(queries, case[2]), false)
     end
   end)
 end)
