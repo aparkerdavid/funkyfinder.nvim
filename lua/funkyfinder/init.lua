@@ -40,6 +40,9 @@ local funkyfinder = {}
 
 function funkyfinder.search_buffer()
   local bufnr = vim.fn.bufnr()
+  local win_id = vim.api.nvim_get_current_win()
+  local current_line = vim.api.nvim_win_get_cursor(win_id)[1]
+
   local candidates = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   for idx, line in pairs(candidates) do
     candidates[idx] = Menu.item(line, { id = idx })
@@ -55,6 +58,7 @@ function funkyfinder.search_buffer()
       clear_highlight(bufnr)
     end,
     on_close = function()
+      jump_to_line(bufnr, current_line)
       clear_highlight(bufnr)
     end,
   }):mount()
