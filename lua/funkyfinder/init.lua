@@ -1,5 +1,8 @@
 local Menu = require 'nui.menu'
 local Path = require 'plenary.path'
+local Line = require 'nui.line'
+local Text = require 'nui.text'
+local log = require 'logging'.log
 local ui = require 'funkyfinder.ui'
 local util = require 'funkyfinder.util'
 local prompt = require 'funkyfinder.prompt'
@@ -23,13 +26,35 @@ local function open_file(win_id, path)
   vim.cmd('e ' .. path)
 end
 
+local function is_match(idx, match)
+  local idx_is_match = false
+  for _, range in pairs(match) do
+    if idx > range[1] and idx <= range[2] then
+      idx_is_match = true
+    end
+  end
+  return idx_is_match
+end
+
 local function orderless_search(candidates)
   return function(prompt_str)
     local results = {}
     local queries = prompt.build_queries(prompt_str)
     for _, candidate in ipairs(candidates) do
-      if prompt.match(queries, candidate.text) then
-        table.insert(results, candidate)
+      local match = prompt.match(queries, candidate.text)
+      if match then
+        local line = Line(Text(''))
+        for i = 1, string.len(candidate.text) do
+          local char = candidate.text:sub(i, i)
+          if is_match(i, match) then
+            log(char)
+            line:append(char, 'Search')
+          else
+            line:append(char)
+          end
+        end
+
+        table.insert(results, Menu.item(line, { id = candidate.id }))
       end
     end
     return results
