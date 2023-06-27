@@ -6,6 +6,7 @@ function util.dir_files(dir)
   Job:new(
     {
       command = 'fd',
+      args = { '--type', 'f' },
       cwd = dir,
       on_stdout = function(_, out)
         table.insert(paths, out)
